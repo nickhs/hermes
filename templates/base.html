@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  {% block head %}
+    <link rel="stylesheet" href="/static/css/bootstrap.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/prettify.css" />
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.js"></script>
+    <title>{% block title %}{% endblock %}, Hermes</title>
+  {% endblock %}
+  </head>
+
+  <body>
+    <header>
+    {% block header %}
+    <div class="navbar">
+      <div class="navbar-inner">
+        <a class="brand" href="#">Hermes</a>
+        <ul class="nav">
+          <li><a href="/">Overview</a></li>
+          <li><a href="/running">Running Jobs</a></li>
+          <li><a href="/new/reddit/user">New User</a></li>
+          <li><a href="/upvote/reddit">Upvote</a></li>
+        </ul>
+      </div>
+    </div>
+    {% endblock %}
+    </header>
+
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        {% for category, message in get_flashed_messages(with_categories=True) %}
+        <div class="alert alert-{{ category }}">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          <strong>{{ category.capitalize() }}:</strong> {{ message }}
+        </div>
+        {% endfor %}
+        {% block content %}
+        {% endblock %}
+      </div>
+    </div>
+
+    <footer>
+    {% block footer %}
+    {% endblock %}
+    </footer>
+  </body>
+</html>
+

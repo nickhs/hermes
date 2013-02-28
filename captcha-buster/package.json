@@ -1,0 +1,11 @@
+{
+  "name": "captcha-buster",
+  "version": "0.0.1",
+  "author": "Nick HS <nick@nickhs.com",
+
+  "dependencies": {
+      "express": ">= 2.0.0",
+      "node-uuid": ">= 0.0.1",
+      "jade": ">=0.28.1"
+  }
+}

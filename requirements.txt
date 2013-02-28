@@ -1,0 +1,9 @@
+boto
+celery
+redis
+hiredis
+fabric
+pytz
+celerymon
+flask
+flask-sqlalchemy

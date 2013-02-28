@@ -1,0 +1,6 @@
+ops/private
+*.pyc
+.vagrant
+settings_override.py
+*node_modules*
+captcha-buster/captchas/*

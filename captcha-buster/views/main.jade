@@ -1,0 +1,17 @@
+!!! 5
+html(lang="en)
+  head
+    title Reddit Captcha Buster
+
+  body
+    h1 Howdy partner...
+    #captcha
+      img(src=captcha.file)
+
+    #form
+      form(method='post')
+        | What does this say to you?
+        div
+          input(type='text', name='answer')
+          input(type='hidden', name='id', value=captcha.id)
+          input(type='submit', value='Go!')

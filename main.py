@@ -1,0 +1,97 @@
+from flask import jsonify, render_template, redirect, request, url_for, flash
+from app import app, celery, redis, db
+from models import Account, Service
+import bi.commands as commands
+import bi.helpers as helpers
+import settings
+
+
+@app.route('/')
+def index():
+    successful = helpers.get_dict_from_list('successful', 20)
+    failed = helpers.get_dict_from_list('failed', 20)
+    accs = Account.query.count()
+    servs = Service.query.count()
+
+    for a in successful:
+        item = Account.query.get(a['account_id'])
+        if item is None:
+            a['alive'] = False
+        else:
+            a['alive'] = True
+
+    for a in failed:
+        item = Account.query.get(a['account_id'])
+        if item is None:
+            a['alive'] = False
+        else:
+            a['alive'] = True
+
+    return render_template('index.html', finished=successful, failed=failed,
+            accs=accs, servs=servs)
+
+
+@app.route('/running')
+def get_running():
+    running = helpers.get_dict_from_list('running')
+    return render_template('running.html', count=len(running), running=running)
+
+
+@app.route('/queued')
+def get_queued():
+    i = celery.control.inspect()
+    active = i.reserved()
+    return jsonify({'running': active})
+
+
+@app.route('/log/<id>')
+def logs(id):
+    log = redis.get('%s_l' % id)
+    if log is None:
+        return "Nothing found"
+
+    info = redis.hgetall(id)
+    logs = log.split('\n')
+    return render_template('logs.html', logs=logs, info=info)
+
+
+@app.route('/new/<type>/user')
+def new_user(type):
+    id = commands.new_user(type)
+    flash("Creating New User / Job %s" % id, 'success')
+    return redirect(request.referrer)
+
+
+@app.route('/upvote/<type>')
+def upvote(type):
+    id = commands.upvote(type)
+    flash("Going up! Job %s" % id, 'success')
+    return redirect(request.referrer)
+
+
+@app.route('/account/<id>')
+def get_account(id):
+    account = Account.query.get(id)
+    if account is None:
+        flash("No user exists for that ID", 'warning')
+        return redirect(request.referrer)
+
+    return render_template('account.html', account=account)
+
+
+@app.route('/account/<id>/delete')
+def delete_account(id):
+    account = Account.query.get(id)
+
+    if account is not None:
+        db.session.delete(account)
+        db.session.commit()
+        flash('%s deleted' % account.username, 'success')
+    else:
+        flash("No user found", 'warning')
+
+    return redirect(url_for('index'))
+
+
+if __name__ == '__main__':
+    app.run(host=settings.HOST)

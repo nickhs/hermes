@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Logs{% endblock %}
+
+{% block head %}
+    <script src="/static/js/prettify.js"></script>
+    {{ super() }}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Logs <small>Get a closer look</small>
+  </h1>
+</div>
+
+<div class="row-fluid">
+  <div class="span10 offset1">
+    <pre class="prettyprint linenums">
+{% for line in logs %}{% if line.startswith('!IMAGE') %}<img src="data:image/jpg;base64,{{ line[7:] }}">{% else %}{{ line.decode('utf-8') }}{% endif %}
+{% endfor%}
+    </pre>
+
+    <a href="/account/{{ info.account_id }}" class="btn">View Account</a>
+    <a href="/account/{{ info.account_id }}/delete" class="btn btn-danger">Delete Account</a>
+  </div>
+</div>
+{% endblock %}

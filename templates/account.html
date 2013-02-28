@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ account.username }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>{{ account.username }} <small>Account Information</small>
+    <span class="pull-right">{{ account.service.type }}</span>
+  </h1>
+</div>
+
+<div class="row-fluid">
+  <div class="span12">
+    <dl>
+      <dt>Username: </dt>
+      <dd>{{ account.username }}</dd>
+
+      <dt>Password:</dt>
+      <dd>{{ account.password }}</dd>
+
+      <dt>Created: </dt>
+      <dd>{{ account.create_date }}</dd>
+
+      <dt>Modified: </dt>
+      <dd>{{ account.modified_date }}</dd>
+
+      <dt>Currently Active: </dt>
+      <dd>{{ account.active }}</dt>
+
+      <dt>Last Action: </dt>
+      <dd>{{ account.last_action }}</dd>
+
+      <dt>Fail Count: </dt>
+      <dd>{{ account.fail_count }}</dd>
+    </dl>
+
+    <a class="btn btn-danger btn-large" href="/account/{{ account.id }}/delete">Delete</a>
+  </div>
+</div>
+{% endblock %}
+
+
