@@ -4,9 +4,11 @@
   {% block head %}
     <link rel="stylesheet" href="/static/css/bootstrap.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/css/prettify.css" />
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap.js"></script>
+    <script type="text/javascript" src="/static/js/underscore.js"></script>
+    <script type="text/javascript" src="/static/js/backbone.js"></script>
+    <script type="text/javascript" src="/static/js/utils.js"></script>
     <title>{% block title %}{% endblock %}, Hermes</title>
   {% endblock %}
   </head>
@@ -20,6 +22,7 @@
         <ul class="nav">
           <li><a href="/">Overview</a></li>
           <li><a href="/running">Running Jobs</a></li>
+          <li><a href="/action">Custom Action</a></li>
           <li><a href="/new/reddit/user">New User</a></li>
           <li><a href="/upvote/reddit">Upvote</a></li>
         </ul>
@@ -41,10 +44,11 @@
       </div>
     </div>
 
-    <footer>
+    <div class="footer container-fluid">
     {% block footer %}
+    Built on love &amp; late nights
     {% endblock %}
-    </footer>
+    </div>
   </body>
 </html>
 

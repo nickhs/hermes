@@ -52,20 +52,28 @@ def logs(id):
 
     info = redis.hgetall(id)
     logs = log.split('\n')
-    return render_template('logs.html', logs=logs, info=info)
+    return render_template('logs.html', logs=logs, info=info,
+            log_id=id)
+
+
+@app.route('/logdata/<id>')
+def logdata(id):
+    log = redis.get('%s_l' % id)
+    logs = log.split('\n')
+    return jsonify({'logs': logs})
 
 
 @app.route('/new/<type>/user')
 def new_user(type):
     id = commands.new_user(type)
-    flash("Creating New User / Job %s" % id, 'success')
+    flash("Creating New User | Job %s" % id, 'success')
     return redirect(request.referrer)
 
 
 @app.route('/upvote/<type>')
 def upvote(type):
     id = commands.upvote(type)
-    flash("Going up! Job %s" % id, 'success')
+    flash("Going up! | Job %s" % id, 'success')
     return redirect(request.referrer)
 
 
@@ -91,6 +99,35 @@ def delete_account(id):
         flash("No user found", 'warning')
 
     return redirect(url_for('index'))
+
+
+@app.route('/action', methods=['GET', 'POST'])
+def custom_action():
+    opt_count = 5
+    if request.method == 'GET':
+        services = db.session.query(Service.id, Service.type).all()
+        return render_template('custom.html', services=services, opt_count=opt_count)
+
+    elif request.method == 'POST':
+        print request.form
+        service = Service.query.get(request.form['service'])
+        if service is None:
+            return
+
+        action = request.form['action']
+        if action is None:
+            return
+
+        options = {}
+        for i in xrange(0, opt_count):
+            opt = request.form['opt%s' % i]
+            if opt is not None:
+                value = request.form['opt%s-val' % i]
+                options[opt] = value
+
+        job_id = commands.custom_action(action, service, options)
+        flash("Performing %s | Job ID: %s" % (action, job_id), 'success')
+        return redirect(url_for('get_running'))
 
 
 if __name__ == '__main__':

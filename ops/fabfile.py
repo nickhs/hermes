@@ -103,3 +103,23 @@ def sync():
     run("mkdir -p /srv")
     sudo("chmod a+w /srv")
     rsync("/srv", exclude=['.git', 'build', '*node_modules*', '*.swp', '*.pyc'])
+
+
+def first_fetch():
+    sudo("apt-get install -y git-core")
+    run("mkdir -p /srv/hermes")
+    sudo("chmod -R a+w /srv/hermes")
+    with cd("/srv/hermes"):
+        run("git clone https://github.com/nickhs/hermes.git")
+
+
+def fetch():
+    with cd("/srv/hermes"):
+        run("git pull")
+
+
+def launch_worker():
+    host = launch_instance()
+    env.hosts = [host]
+    full_update()
+    first_fetch()

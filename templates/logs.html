@@ -2,19 +2,24 @@
 {% block title %}Logs{% endblock %}
 
 {% block head %}
-    <script src="/static/js/prettify.js"></script>
     {{ super() }}
+    <script src="/static/js/logs.js" type="text/javascript"></script>
 {% endblock %}
 
 {% block content %}
+<script type="text/javascript">
+  window.LogID = "{{ log_id }}";
+</script>
+
 <div class="page-header">
   <h1>Logs <small>Get a closer look</small>
+    <button id="realtime-button" href="#" class="btn pull-right btn-large btn-primary">Realtime</button>
   </h1>
 </div>
 
 <div class="row-fluid">
   <div class="span10 offset1">
-    <pre class="prettyprint linenums">
+    <pre class="prettyprint linenums" id="logs">
 {% for line in logs %}{% if line.startswith('!IMAGE') %}<img src="data:image/jpg;base64,{{ line[7:] }}">{% else %}{{ line.decode('utf-8') }}{% endif %}
 {% endfor%}
     </pre>

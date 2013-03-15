@@ -67,8 +67,10 @@ class Job:
             output = proc.stdout.readline()
             store.append(output)
             print output
+            print store
             if datetime.now() > timedelta(seconds=settings.REDIS_FLUSH_TIME) + last_send_time:
-                if not len(store) == 0:
+                if len(store) > 0:
+                    print "SAVING"
                     self.log("".join(store))
 
                 store = []

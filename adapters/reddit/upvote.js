@@ -26,6 +26,7 @@ function getUrl() {
     return base + "r/" + casper.cli.get('subreddit');
   }
 
+  casper.log("getURL called")
   return base;
 }
 
@@ -45,8 +46,10 @@ casper.then(function() {
 });
 
 casper.then(function() {
-  this.wait(1000)
+  this.wait(3000)
 });
+
+casper.thenOpen(getUrl());
 
 casper.then(function() {
   var ret = casper.evaluate(function() {
