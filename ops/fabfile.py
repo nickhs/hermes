@@ -60,11 +60,11 @@ def _terminate_instance(ids):
 
 
 def install_master_deps():
-    sudo("apt-get install -y htop redis-server postgresql postgresql-client postgresql-server-dev-9.1")
+    sudo("apt-get install -y htop redis-server")
 
 
 def install_python_deps():
-    sudo("apt-get install -y python python-pip libevent-dev make pep8 python-dev python-setuptools build-essential")
+    sudo("apt-get install -y python python-pip libevent-dev make postgresql postgresql-server-dev-9.1 postgresql-client pep8 python-dev python-setuptools build-essential")
     with cd(app_settings.PATH):
         sudo("pip install --upgrade -r requirements.txt")
 
