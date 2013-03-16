@@ -1,14 +1,16 @@
-from fabric.api import run, sudo, cd, env
-from fabric.colors import red
+from fabric.api import run, sudo, cd, env, settings, put
+from fabric.colors import red, green
 from fabric.utils import abort, puts
 from fabric.contrib.files import append
 from fabric.contrib.project import rsync_project as rsync
 import boto.ec2
 import time
-from app import settings
+from app import settings as app_settings
 
 env.user = 'ubuntu'
 env.key_filename = './ops/private/hermes.pem'
+env.connection_attempts = 3
+env.timeout = 15
 conn = None
 
 
@@ -16,24 +18,24 @@ def _get_conn():
     global conn
     if conn is None:
         t_conn = boto.ec2.connect_to_region('us-east-1',
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+            aws_access_key_id=app_settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=app_settings.AWS_SECRET_ACCESS_KEY)
 
         if t_conn is None:
-            print(red("Failed to connect to EC2"))
+            puts(red("Failed to connect to EC2"))
             abort("Fatal Error")
 
         conn = t_conn
     return conn
 
 
-def launch_instance():
+def _launch_instance(type='t1.micro'):
     puts("Creating instance...")
     ec2 = _get_conn()
     reservation = ec2.run_instances('ami-3fec7956',
             key_name='hermes',
             security_groups=['hermes'],
-            instance_type='t1.micro')
+            instance_type=type)
 
     instance = reservation.instances[0]
 
@@ -45,11 +47,26 @@ def launch_instance():
             break
 
     puts("Instance created " + instance.public_dns_name)
-    return instance.public_dns_name
+    return instance.public_dns_name, instance.id
+
+
+def _terminate_instance(ids):
+    puts("Killing " + ids)
+    if type(ids) == str:
+        ids = ids.split(',')
+
+    ec2 = _get_conn()
+    ec2.terminate_instances(ids)
+
+
+def install_master_deps():
+    sudo("apt-get install -y htop redis-server postgresql postgresql-client postgresql-server-dev-9.1")
 
 
 def install_python_deps():
-    sudo("pip install --upgrade -r requirements.txt")
+    sudo("apt-get install -y python python-pip libevent-dev make pep8 python-dev python-setuptools build-essential")
+    with cd(app_settings.PATH):
+        sudo("pip install --upgrade -r requirements.txt")
 
 
 def install_node():
@@ -60,7 +77,7 @@ def install_node():
 
 
 def install_captcha_deps():
-    with cd(settings.PATH + "/captcha-buster"):
+    with cd(app_settings.PATH + "/captcha-buster"):
         run("npm install")
 
 
@@ -72,6 +89,8 @@ def install_phantomjs():
         run("chmod a+rwx ./bin/phantomjs")
         sudo("ln -s `pwd`/bin/phantomjs /usr/bin/phantomjs")
 
+    run('phantomjs --version')
+
 
 def install_casperjs():
     run("wget https://github.com/n1k0/casperjs/tarball/1.0.2")
@@ -80,6 +99,8 @@ def install_casperjs():
         run('ls')
         run("chmod a+rwx ./bin/casperjs")
         sudo("ln -s `pwd`/bin/casperjs /usr/bin/casperjs")
+
+    run('casperjs --version')
 
 
 def install_tor():
@@ -100,26 +121,60 @@ def full_update():
 
 
 def sync():
-    run("mkdir -p /srv")
+    sudo("mkdir -p /srv")
     sudo("chmod a+w /srv")
     rsync("/srv", exclude=['.git', 'build', '*node_modules*', '*.swp', '*.pyc'])
 
 
 def first_fetch():
-    sudo("apt-get install -y git-core")
-    run("mkdir -p /srv/hermes")
-    sudo("chmod -R a+w /srv/hermes")
-    with cd("/srv/hermes"):
-        run("git clone https://github.com/nickhs/hermes.git")
+    sudo("apt-get update")
+    sudo("apt-get install -y git")
+    sudo("mkdir -p " + app_settings.PATH)
+    sudo("chmod -R a+w " + app_settings.PATH)
+    with cd(app_settings.PATH):
+        run("git clone https://github.com/nickhs/hermes.git .")
 
 
 def fetch():
-    with cd("/srv/hermes"):
+    with cd(app_settings.PATH):
         run("git pull")
 
 
-def launch_worker():
-    host = launch_instance()
-    env.hosts = [host]
-    full_update()
-    first_fetch()
+def copy_override():
+    put('prod_settings_override.py', app_settings.PATH + '/settings_override.py')
+
+
+def shell():
+    run('ssh -i %s -l %s %s' % (app_settings.PATH + env.key_filename.lstrip('.'), env.user, env.hosts[0]))
+
+
+def launch_worker(launch=True, host=None):
+    try:
+        host, id = _launch_instance()
+        with settings(host_string=host):
+            full_update()
+            first_fetch()
+            install_tor()
+            install_python_deps()
+            install_phantomjs()
+            install_casperjs()
+            puts(green("All done! " + host))
+    except Exception as e:
+        puts(red("Abort! Abort! Abort!"))
+        puts(red(e))
+        _terminate_instance(id)
+        puts("Torn down", host)
+
+
+def launch_master():
+    host, id = _launch_instance('m1.small')
+    with settings(host_string=host):
+        full_update()
+        first_fetch()
+        install_python_deps()
+        install_master_deps()
+        copy_override()
+        with cd(app_settings.PATH):
+            run('python bootstrap.py')
+
+        puts(green("All done! " + host))

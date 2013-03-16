@@ -7,3 +7,4 @@ pytz
 celerymon
 flask
 flask-sqlalchemy
+psycopg2

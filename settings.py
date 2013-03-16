@@ -2,7 +2,6 @@ REDIS_URL = 'localhost'
 REDIS_PORT = 6379
 REDIS_DB = 0
 REDIS_FLUSH_TIME = 1
-BROKER_URL = 'redis://%s:%s/%s' % (REDIS_URL, REDIS_PORT, REDIS_DB)
 BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 7200}
 CELERY_RESULT_BACKEND = BROKER_URL
 CELERYD_PREFETCH_MULTIPLIER = 1
@@ -531,4 +530,9 @@ NAMES = [
     "spenc2cc9knight",
     "sodaapop101"]
 
-from settings_override import *
+try:
+    from settings_override import *
+except:
+    print "No settings override found"
+
+BROKER_URL = 'redis://%s:%s/%s' % (REDIS_URL, REDIS_PORT, REDIS_DB)

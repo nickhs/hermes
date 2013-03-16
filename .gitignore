@@ -4,3 +4,5 @@ ops/private
 settings_override.py
 *node_modules*
 captcha-buster/captchas/*
+prod_settings_override.py
+notes.txt
