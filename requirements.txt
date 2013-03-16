@@ -8,3 +8,5 @@ celerymon
 flask
 flask-sqlalchemy
 psycopg2
+gunicorn
+gevent

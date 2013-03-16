@@ -140,6 +140,26 @@ def fetch():
         run("git pull")
 
 
+def worker_supervisor():
+    put('ops/private/worker_supervisord.conf', '/etc/supervisord.conf', use_sudo=True)
+    _setup_supervisor()
+
+
+def master_supervisor():
+    put('ops/private/master_supervisord.conf', '/etc/supervisord.conf', use_sudo=True)
+    _setup_supervisor()
+
+
+def _setup_supervisor():
+    sudo('apt-get install supervisor')
+    sudo('mkdir -p /var/log/hermes')
+    sudo('chmod a+rw /var/log/hermes')
+    put('ops/private/supervisor_init', '/etc/init.d/supervisord', use_sudo=True)
+    sudo('chmod a+x /etc/init.d/supervisord')
+    sudo('update-rc.d supervisord defaults')
+    sudo('service supervisord start')
+
+
 def copy_override():
     put('prod_settings_override.py', app_settings.PATH + '/settings_override.py')
 
@@ -147,6 +167,11 @@ def copy_override():
 def conf_sync_master():
     put('ops/private/pg_hba.conf', '/etc/postgresql/9.1/main/pg_hba.conf', use_sudo=True)
     sudo('service postgresql reload')
+
+    put('ops/private/create_db.sql', '/tmp/create_db.sql')
+    sudo('sudo -u postgres psql -a -f /tmp/create_db.sql')
+    put('ops/private/redis.conf', '/etc/redis/redis.conf', use_sudo=True)
+    sudo('service redis-server restart')
 
 
 def shell():
@@ -164,6 +189,7 @@ def launch_worker(launch=True, host=None):
             install_phantomjs()
             install_casperjs()
             copy_override()
+            worker_supervisor()
             puts(green("All done! " + host))
     except Exception as e:
         puts(red("Abort! Abort! Abort!"))
@@ -181,6 +207,7 @@ def launch_master():
         install_master_deps()
         copy_override()
         conf_sync_master()
+        master_supervisor()
         with cd(app_settings.PATH):
             run('python bootstrap.py')
 
