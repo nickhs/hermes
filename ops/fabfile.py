@@ -144,6 +144,11 @@ def copy_override():
     put('prod_settings_override.py', app_settings.PATH + '/settings_override.py')
 
 
+def conf_sync_master():
+    put('ops/private/pg_hba.conf', '/etc/postgresql/9.1/main/pg_hba.conf', use_sudo=True)
+    sudo('service postgresql reload')
+
+
 def shell():
     run('ssh -i %s -l %s %s' % (app_settings.PATH + env.key_filename.lstrip('.'), env.user, env.hosts[0]))
 
@@ -158,6 +163,7 @@ def launch_worker(launch=True, host=None):
             install_python_deps()
             install_phantomjs()
             install_casperjs()
+            copy_override()
             puts(green("All done! " + host))
     except Exception as e:
         puts(red("Abort! Abort! Abort!"))
@@ -174,6 +180,7 @@ def launch_master():
         install_python_deps()
         install_master_deps()
         copy_override()
+        conf_sync_master()
         with cd(app_settings.PATH):
             run('python bootstrap.py')
 
