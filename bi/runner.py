@@ -4,15 +4,35 @@ from app import celery, settings, db
 from models import Account
 import redis
 from datetime import datetime, timedelta
-from reset_tor import reset as reset_tor
+import random
 
 
 @celery.task
 def run_command(command, info):
-    reset_tor(9051)
+    if settings.WORKERS_USE_TOR:
+        # Initialize and use tor proxy
+        socks_port = random.randrange(50000, 60000)
+        control_port = random.randrange(50000, 60000)
+        # Port collision? Don't worry about that.
+        tor_command = "tor --SOCKSPort %s --ControlPort %s" % (socks_port, control_port)
+        print "Executing tor command: %s" % tor_command
+        tor_command = shlex.split(tor_command)
+        proc = subprocess.Popen(tor_command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        while proc.poll() is None:
+            output = proc.stdout.readline()
+            if 'Bootstrapped 100%: Done.' in output:
+                print 'We have a working connection!'
+                break
+
+        command += ' --proxy="127.0.0.1:%s" --proxy-type="socks5"' % socks_port
+
     j = Job(run_command.request.id, info)
     result = j.run(command)
     j.finish(result)
+
+    if settings.WORKERS_USE_TOR:
+        proc.kill()
 
 
 class Job:

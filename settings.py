@@ -23,10 +23,9 @@ DEBUG = True
 HOST = '0.0.0.0'
 PATH = '/srv/hermes'
 SECRET_KEY = 'this_is_not_a_secret'
+WORKERS_USE_TOR = True
 
 OPTIONS = {
-    'proxy': '127.0.0.1:9050',
-    'proxy-type': 'socks5'
 }
 
 NAMES = [
