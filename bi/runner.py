@@ -16,7 +16,7 @@ def run_command(command, info):
         # Initialize and use tor proxy
         socks_port = random.randrange(50000, 60000)
         control_port = random.randrange(50000, 60000)
-        directory = '/tmp/%s' % uuid.uud1()
+        directory = '/tmp/%s' % uuid.uuid1()
         os.makedirs(directory)
 
         # Port collision? Don't worry about that.
