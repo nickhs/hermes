@@ -59,6 +59,28 @@ def _terminate_instance(ids):
     ec2.terminate_instances(ids)
 
 
+def find_live_hosts():
+    ec2 = _get_conn()
+
+    reservations = ec2.get_all_instances()
+    instances = [i for r in reservations for i in r.instances]
+
+    hosts = []
+    for instance in instances:
+        if instance.state != 'running':
+            continue
+
+        if instance.tags.get('Section') != 'hermes':
+            continue
+
+        if not instance.public_dns_name:
+            continue
+
+        hosts.append(str(instance.public_dns_name))
+
+    return hosts
+
+
 def install_master_deps():
     sudo("apt-get install -y htop redis-server")
 
@@ -135,9 +157,19 @@ def first_fetch():
         run("git clone https://github.com/nickhs/hermes.git .")
 
 
-def fetch():
-    with cd(app_settings.PATH):
-        run("git pull")
+def update():
+    hosts = []
+    if not env.hosts:
+        puts("Getting hosts from Amazon")
+        hosts = find_live_hosts()
+    else:
+        hosts = env.hosts
+
+    for host in hosts:
+        with settings(host_string=host):
+            copy_override()
+            with cd(app_settings.PATH):
+                run("git pull")
 
 
 def worker_supervisor():
