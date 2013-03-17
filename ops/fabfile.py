@@ -106,6 +106,7 @@ def install_node():
 def install_captcha_deps():
     with cd(app_settings.PATH + "/captcha-buster"):
         run("npm install")
+        run("mkdir captchas")
 
 
 def install_phantomjs():
@@ -194,6 +195,12 @@ def master_supervisor():
 def captcha_supervisor():
     _setup_supervisor()
     put('ops/private/captcha_supervisord.conf', '/etc/supervisor/conf.d/captcha_supervisord.conf', use_sudo=True)
+    sudo('supervisorctl reload')
+
+
+def flower_supervisor():
+    _setup_supervisor()
+    put('ops/private/flower_supervisord.conf', '/etc/supervisor/conf.d/flower_supervisord.conf', use_sudo=True)
     sudo('supervisorctl reload')
 
 
