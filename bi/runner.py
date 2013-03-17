@@ -4,10 +4,12 @@ from app import celery, settings, db
 from models import Account
 import redis
 from datetime import datetime, timedelta
+from reset_tor import reset as reset_tor
 
 
 @celery.task
 def run_command(command, info):
+    reset_tor(9051)
     j = Job(run_command.request.id, info)
     result = j.run(command)
     j.finish(result)
