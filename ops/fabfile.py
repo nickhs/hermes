@@ -29,7 +29,10 @@ def _get_conn():
     return conn
 
 
-def _launch_instance(type='t1.micro'):
+def _launch_instance(type, role):
+    if not type:
+        type = 't1.micro'
+
     puts("Creating instance...")
     ec2 = _get_conn()
     reservation = ec2.run_instances('ami-3fec7956',
@@ -47,6 +50,8 @@ def _launch_instance(type='t1.micro'):
             break
 
     puts("Instance created " + instance.public_dns_name)
+    instance.add_tag('Role', role)
+    instance.add_tag('Section', 'hermes')
     return instance.public_dns_name, instance.id
 
 
@@ -171,6 +176,8 @@ def update():
             with cd(app_settings.PATH):
                 run("git pull")
 
+            sudo('supervisorctl restart all')
+
 
 def worker_supervisor():
     _setup_supervisor()
@@ -215,8 +222,8 @@ def shell():
     run('ssh -i %s -l %s %s' % (app_settings.PATH + env.key_filename.lstrip('.'), env.user, env.hosts[0]))
 
 
-def launch_base():
-    host, id = _launch_instance()
+def launch_base(type=None, role='unknown'):
+    host, id = _launch_instance(type, role)
     with settings(host_string=host):
         full_update()
         first_fetch()
@@ -226,7 +233,7 @@ def launch_base():
 
 
 def launch_worker(launch=True, host=None):
-    host, id = launch_base()
+    host, id = launch_base(role='worker')
     with settings(host_string=host):
         install_tor()
         install_python_deps()
@@ -237,7 +244,7 @@ def launch_worker(launch=True, host=None):
 
 
 def launch_master():
-    host, id = launch_base()
+    host, id = launch_base(type='m1.small', role='master')
     with settings(host_string=host):
         install_python_deps()
         install_master_deps()
