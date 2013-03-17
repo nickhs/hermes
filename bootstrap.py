@@ -12,7 +12,7 @@ s.type = "reddit"
 
 opt = {
     'host': 'http://%s:%s/captcha' % (settings.CAPTCHA_HOST, settings.CAPTCHA_PORT),
-    'headless': False
+    'headless': True
 }
 
 s.set_options(opt)
