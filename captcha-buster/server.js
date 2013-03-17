@@ -2,9 +2,11 @@ var express = require('express');
 var uuid = require('node-uuid');
 var app = module.exports = express.createServer();
 var fs = require('fs');
+var WebSocketServer = require('ws').Server;
+var wss = new WebSocketServer({port: 8080});
 
-TIMEOUT = 180000
-captchas = []
+var TIMEOUT = 1800000;
+var captchas = [];
 
 var allowCrossDomain = function(req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
@@ -12,7 +14,7 @@ var allowCrossDomain = function(req, res, next) {
   res.header('Access-Control-Allow-Headers', 'Content-Type');
 
   next();
-}
+};
 
 app.configure(function() {
   app.set('views', __dirname + '/views');
@@ -25,61 +27,73 @@ app.configure(function() {
   app.use(express.static(__dirname + '/static'));
 });
 
-app.post('/captcha', function(req, res) {
-  console.log("Received data!");
+wss.on('connection', function(ws) {
+  ws.on('message', function(msg) {
+    console.log('Received data!');
 
-  var id = uuid.v4();
-  image = new Buffer(req.body.image, 'base64');
-  fs.writeFile(__dirname+'/captchas/'+id+'.png', image, function(err) {});
+    var id = uuid.v4();
+    var image = new Buffer(msg, 'base64');
+    fs.writeFile(__dirname+'/captchas/'+id+'.png', image, null);
 
-  var temp = {
-    id: id,
-    time: new Date(),
-    file: '/captchas/'+id+'.png',
-    solved: false,
-  };
+    var temp = {
+      id: id,
+      time: new Date(),
+      file: '/captchas/'+id+'.png',
+      solved: false
+    };
 
-  captchas.push(temp);
-  console.log(temp);
+    console.log(temp);
+    temp.ws = ws;
+    captchas.push(temp);
 
-  var intv = setInterval(function() {
-    for (var i=0; i < captchas.length; i++) {
-      if (captchas[i].id == id) {
-        if (captchas[i].solved != false) {
-          console.log("Solved! "+captchas[i].id);
-          res.send(captchas[i].solved);
-          fs.unlink(__dirname+captchas[i].file);
-          captchas.splice(i, 1);
-          clearInterval(intv);
+    var intv = setInterval(function() {
+      for (var i=0; i < captchas.length; i++) {
+        var captcha = captchas[i];
+
+        if (captcha.id == id) {
+          if (captcha.solved !== false) {
+            console.log('Solved! '+captcha.id);
+            ws.send(captcha.solved);
+            fs.unlink(__dirname+captcha.file);
+            captchas.splice(i, 1);
+            clearInterval(intv);
+          }
+
+          else if ((captcha.time.getTime() + TIMEOUT) < (new Date().getTime())) {
+            console.log('Captcha operation timed out :( ');
+
+            try {
+              ws.send('failed');
+            } catch (err) {
+              console.log(err);
+              console.log('Client probably ditched me. Bastard');
+            }
+
+            captchas.splice(i, 1);
+            clearInterval(intv);
+          }
+          break;
         }
-
-        else if ((captchas[i].time.getTime() + TIMEOUT) < (new Date().getTime())) {
-          console.log("Captcha operation timed out :( ");
-          res.send('failed');
-          captchas.splice(i, 1);
-          clearInterval(intv);
-        }
-        break;
       }
-    }
-  }, 2000);
+    }, 2000);
+  });
 });
 
 
 app.get('/', function(req, res) {
-  console.log("Fooo");
+  console.log('Fooo');
   var r = null;
 
   if (captchas.length > 0) {
     for (var i=0; i < captchas.length; i++) {
-      if (captchas[i].solved == false) {
+      if (captchas[i].solved === false) {
         r = captchas[i];
         break;
       }
     }
   }
 
-  if (r == null) {
+  if (r === null) {
     res.send('Got nothing for you :(');
   }
 
@@ -89,10 +103,10 @@ app.get('/', function(req, res) {
 });
 
 app.post('/', function(req, res) {
-  console.log("I got posted!");
+  console.log('I got posted!');
   for (var i=0; i < captchas.length; i++) {
     if (req.body.id == captchas[i].id) {
-      console.log("Match found!");
+      console.log('Match found!');
       captchas[i].solved = req.body.answer;
       break;
     }
@@ -102,5 +116,5 @@ app.post('/', function(req, res) {
 });
 
 app.listen(8060, function() {
-  console.log("Listening...");
+  console.log('Listening...');
 });

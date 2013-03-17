@@ -6,6 +6,7 @@
   "dependencies": {
       "express": ">= 2.0.0",
       "node-uuid": ">= 0.0.1",
-      "jade": ">=0.28.1"
+      "jade": ">=0.28.1",
+      "ws": "*"
   }
 }
