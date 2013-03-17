@@ -73,7 +73,7 @@ def install_node():
     sudo("apt-get install -y python-software-properties python g++ make")
     sudo("FORCE_ADD_APT_REPOSITORY=1 add-apt-repository ppa:chris-lea/node.js")
     sudo("apt-get update")
-    sudo("apt-get install -y nodejs npm")
+    sudo("apt-get install -y nodejs")
 
 
 def install_captcha_deps():
@@ -142,13 +142,19 @@ def fetch():
 
 def worker_supervisor():
     _setup_supervisor()
-    put('ops/private/worker_supervisord.conf', '/etc/supervisor/conf.d/supervisord.conf', use_sudo=True)
+    put('ops/private/worker_supervisord.conf', '/etc/supervisor/conf.d/worker_supervisord.conf', use_sudo=True)
     sudo('supervisorctl reload')
 
 
 def master_supervisor():
     _setup_supervisor()
-    put('ops/private/master_supervisord.conf', '/etc/supervisor/conf.d/supervisord.conf', use_sudo=True)
+    put('ops/private/master_supervisord.conf', '/etc/supervisor/conf.d/master_supervisord.conf', use_sudo=True)
+    sudo('supervisorctl reload')
+
+
+def captcha_supervisor():
+    _setup_supervisor()
+    put('ops/private/captcha_supervisord.conf', '/etc/supervisor/conf.d/captcha_supervisord.conf', use_sudo=True)
     sudo('supervisorctl reload')
 
 
@@ -177,34 +183,32 @@ def shell():
     run('ssh -i %s -l %s %s' % (app_settings.PATH + env.key_filename.lstrip('.'), env.user, env.hosts[0]))
 
 
-def launch_worker(launch=True, host=None):
-    try:
-        host, id = _launch_instance()
-        with settings(host_string=host):
-            full_update()
-            first_fetch()
-            install_tor()
-            install_python_deps()
-            install_phantomjs()
-            install_casperjs()
-            copy_override()
-            worker_supervisor()
-            puts(green("All done! " + host))
-    except Exception as e:
-        puts(red("Abort! Abort! Abort!"))
-        puts(red(e))
-        _terminate_instance(id)
-        puts("Torn down", host)
-
-
-def launch_master():
-    host, id = _launch_instance('m1.small')
+def launch_base():
+    host, id = _launch_instance()
     with settings(host_string=host):
         full_update()
         first_fetch()
+        copy_override()
+
+    return host, id
+
+
+def launch_worker(launch=True, host=None):
+    host, id = launch_base()
+    with settings(host_string=host):
+        install_tor()
+        install_python_deps()
+        install_phantomjs()
+        install_casperjs()
+        worker_supervisor()
+        puts(green("All done! " + host))
+
+
+def launch_master():
+    host, id = launch_base()
+    with settings(host_string=host):
         install_python_deps()
         install_master_deps()
-        copy_override()
         conf_sync_master()
         with cd(app_settings.PATH):
             run('python bootstrap.py')
