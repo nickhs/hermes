@@ -23,7 +23,7 @@ def new_user(type, custom_options={}):
     command = get_command(account, 'new_user', options)
     info = get_info(options, 'new_user', account, service)
 
-    job = runner.run_command.delay((str(command), info))
+    job = runner.run_command.delay(str(command), info)
     return job.id
 
 
