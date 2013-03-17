@@ -5,6 +5,9 @@ from models import Account
 import redis
 from datetime import datetime, timedelta
 import random
+import uuid
+import os
+import shutil
 
 
 @celery.task
@@ -13,8 +16,11 @@ def run_command(command, info):
         # Initialize and use tor proxy
         socks_port = random.randrange(50000, 60000)
         control_port = random.randrange(50000, 60000)
+        directory = '/tmp/%s' % uuid.uud1()
+        os.makedirs(directory)
+
         # Port collision? Don't worry about that.
-        tor_command = "tor --SOCKSPort %s --ControlPort %s" % (socks_port, control_port)
+        tor_command = "tor --SOCKSPort %s --ControlPort %s --DataDirectory %s" % (socks_port, control_port, directory)
         print "Executing tor command: %s" % tor_command
         tor_command = shlex.split(tor_command)
         proc = subprocess.Popen(tor_command, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -33,6 +39,7 @@ def run_command(command, info):
 
     if settings.WORKERS_USE_TOR:
         proc.kill()
+        shutil.rmtree(directory)
 
 
 class Job:
