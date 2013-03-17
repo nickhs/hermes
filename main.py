@@ -130,5 +130,16 @@ def custom_action():
         return redirect(url_for('get_running'))
 
 
+@app.route('/go/<place>')
+def go(place):
+    if place == 'captcha':
+        return redirect('http://%s:%s' % (settings.CAPTCHA_HOST, settings.CAPTCHA_PORT))
+
+    if place == 'flower':
+        return redirect('http://%s:%s' % (settings.FLOWER_HOST, settings.FLOWER_PORT))
+
+    else:
+        return redirect(url_for('index'))
+
 if __name__ == '__main__':
     app.run(host=settings.HOST)
