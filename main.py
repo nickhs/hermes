@@ -134,7 +134,7 @@ def custom_action():
         else:
             for i in xrange(0, count):
                 commands.custom_action(action, service, options)
-                flash("Performing %s %s operataions" % (count, action), 'success')
+            flash("Performing %s %s operataions" % (count, action), 'success')
 
         return redirect(url_for('get_running'))
 

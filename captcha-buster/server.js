@@ -50,24 +50,14 @@ wss.on('connection', function(ws) {
 
 
 app.get('/', function(req, res) {
-  console.log('Fooo');
-  var r = null;
+  console.log('Got get request');
 
   if (captchas.length > 0) {
-    for (var i=0; i < captchas.length; i++) {
-      if (captchas[i].solved === false) {
-        r = captchas[i];
-        break;
-      }
-    }
-  }
-
-  if (r === null) {
-    res.send('Got nothing for you :(');
+    res.render('main', {'captcha': captchas[0]});
   }
 
   else {
-    res.render('main', {'captcha': r});
+    res.send('Got nothing for you :(');
   }
 });
 
@@ -82,6 +72,7 @@ app.post('/', function(req, res) {
 
       try {
         captcha.ws.send(captcha.solved);
+        console.log('Sending', captcha);
       } catch (err) {
         console.log('Client probably ditched me. Bastard.');
         console.log(err);
