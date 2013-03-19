@@ -125,7 +125,7 @@ def custom_action():
                 value = request.form['opt%s-val' % i]
                 options[opt] = value
 
-        count = request.form['count']
+        count = int(request.form['count'])
 
         if count == 1:
             job_id = commands.custom_action(action, service, options)
