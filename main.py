@@ -125,8 +125,17 @@ def custom_action():
                 value = request.form['opt%s-val' % i]
                 options[opt] = value
 
-        job_id = commands.custom_action(action, service, options)
-        flash("Performing %s | Job ID: %s" % (action, job_id), 'success')
+        count = request.form['count']
+
+        if count == 1:
+            job_id = commands.custom_action(action, service, options)
+            flash("Performing %s | Job ID: %s" % (action, job_id), 'success')
+
+        else:
+            for i in xrange(0, count):
+                commands.custom_action(action, service, options)
+                flash("Performing %s %s operataions" % (count, action), 'success')
+
         return redirect(url_for('get_running'))
 
 
