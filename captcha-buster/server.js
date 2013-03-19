@@ -5,7 +5,6 @@ var fs = require('fs');
 var WebSocketServer = require('ws').Server;
 var wss = new WebSocketServer({port: 8080});
 
-var TIMEOUT = 1800000;
 var captchas = [];
 
 var allowCrossDomain = function(req, res, next) {
@@ -27,6 +26,7 @@ app.configure(function() {
   app.use(express.static(__dirname + '/static'));
 });
 
+
 wss.on('connection', function(ws) {
   ws.on('message', function(msg) {
     console.log('Received data!');
@@ -45,37 +45,6 @@ wss.on('connection', function(ws) {
     console.log(temp);
     temp.ws = ws;
     captchas.push(temp);
-
-    var intv = setInterval(function() {
-      for (var i=0; i < captchas.length; i++) {
-        var captcha = captchas[i];
-
-        if (captcha.id == id) {
-          if (captcha.solved !== false) {
-            console.log('Solved! '+captcha.id);
-            ws.send(captcha.solved);
-            fs.unlink(__dirname+captcha.file);
-            captchas.splice(i, 1);
-            clearInterval(intv);
-          }
-
-          else if ((captcha.time.getTime() + TIMEOUT) < (new Date().getTime())) {
-            console.log('Captcha operation timed out :( ');
-
-            try {
-              ws.send('failed');
-            } catch (err) {
-              console.log(err);
-              console.log('Client probably ditched me. Bastard');
-            }
-
-            captchas.splice(i, 1);
-            clearInterval(intv);
-          }
-          break;
-        }
-      }
-    }, 2000);
   });
 });
 
@@ -105,12 +74,25 @@ app.get('/', function(req, res) {
 app.post('/', function(req, res) {
   console.log('I got posted!');
   for (var i=0; i < captchas.length; i++) {
-    if (req.body.id == captchas[i].id) {
+    var captcha = captchas[i];
+    if (req.body.id == captcha.id) {
       console.log('Match found!');
-      captchas[i].solved = req.body.answer;
+      captcha.solved = req.body.answer;
+      console.log('Solved! ' + captcha.id);
+
+      try {
+        captcha.ws.send(captcha.solved);
+      } catch (err) {
+        console.log('Client probably ditched me. Bastard.');
+        console.log(err);
+      }
+
+      fs.unlink(__dirname + captcha.file);
+      captchas.splice(i, 1);
       break;
     }
   }
+
   console.log(captchas);
   res.redirect('/');
 });
