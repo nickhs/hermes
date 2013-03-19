@@ -72,7 +72,7 @@ def new_user(type):
 
 @app.route('/upvote/<type>')
 def upvote(type):
-    id = commands.upvote(type)
+    id = commands.custom_action('upvote', type, {})
     flash("Going up! | Job %s" % id, 'success')
     return redirect(request.referrer)
 

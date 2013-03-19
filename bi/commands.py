@@ -4,59 +4,22 @@ from bi import runner
 
 
 def new_user(type, custom_options={}):
-    service = Service.query.filter(Service.type == type).first()
+    service = Service.query.filter(Service.type == type).one()
     account = Account()
     account.fill(service)
     db.session.add(account)
     db.session.commit()
 
-    options = {
-        'username': account.username,
-        'password': account.password,
-    }
-
-    options = add_service_options(options, service)
-
-    for key, value in custom_options.iteritems():
-        options[key] = value
-
-    command = get_command(account, 'new_user', options)
-    info = get_info(options, 'new_user', account, service)
-
-    job = runner.run_command.delay(str(command), info)
-    return job.id
+    return custom_action('new_user', service, custom_options, account=account)
 
 
-def upvote(type, post=None, custom_options={}):
-    service = Service.query.filter(Service.type == type).one()
-    account = get_account(service)
+def custom_action(action, service, custom_options, account=None):
+    if isinstance(service, str):
+        # Assume its a service type
+        service = Service.query.filter(Service.type == type).one()
 
-    options = {
-        'username': account.username,
-        'password': account.password
-    }
-
-    if post:
-        options['post'] = post
-
-    options = add_service_options(options, service)
-
-    for key, value in custom_options.iteritems():
-        options[key] = value
-
-    command = get_command(account, 'upvote', options)
-    info = get_info(options, 'upvote', account, service)
-
-    account.active = True
-    db.session.add(account)
-    db.session.commit()
-
-    job = runner.run_command.delay(str(command), info)
-    return job.id
-
-
-def custom_action(action, service, custom_options):
-    account = get_account(service)
+    if not account:
+        account = get_account(service)
 
     options = {
         'username': account.username,
