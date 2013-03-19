@@ -6,13 +6,24 @@ $(function() {
 });
 
 var LogView = Backbone.View.extend({
+  req: false,
+
   initialize: function() {
     // this.listenTo(this.model, 'change', this.render);
     this.model.on('change', this.render, this);
     this.intv = setInterval(function() {
-      this.model.fetch();
+      this.fetch();
     }.bind(this), 1000);
-    this.model.fetch();
+    this.fetch();
+  },
+
+  fetch: function(force) {
+    if (this.req.readyState == 4 && force)
+      this.req.abort();
+    else
+      return;
+
+    this.req = this.model.fetch();
   },
 
   render: function() {
@@ -47,7 +58,7 @@ var ButtonView = Backbone.View.extend({
   enabled: false,
 
   events: {
-    "click":  "enable"
+    'click':  'enable'
   },
 
   enable: function() {
@@ -58,7 +69,7 @@ var ButtonView = Backbone.View.extend({
       id: window.LogID
     });
 
-    var logView = new LogView({
+    new LogView({
       model: log,
       el: $('#logs')
     });
@@ -68,4 +79,3 @@ var ButtonView = Backbone.View.extend({
     this.enabled = true;
   }
 });
-
