@@ -23,7 +23,7 @@ var LogView = Backbone.View.extend({
     else if (this.req.readyState != 4)
       return;
 
-    this.req = this.model.fetch();
+    return this.model.fetch();
   },
 
   render: function() {
