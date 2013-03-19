@@ -34,7 +34,8 @@ def index():
 @app.route('/running')
 def get_running():
     running = helpers.get_dict_from_list('running')
-    return render_template('running.html', count=len(running), running=running)
+    queued = redis.llen('celery')
+    return render_template('running.html', count=len(running), queued=queued, running=running)
 
 
 @app.route('/queued')

@@ -21,6 +21,10 @@ def custom_action(action, service, custom_options, account=None):
     if not account:
         account = get_account(service)
 
+    # if still no account
+    if not account:
+        return
+
     options = {
         'username': account.username,
         'password': account.password
