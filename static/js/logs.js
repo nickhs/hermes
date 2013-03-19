@@ -12,15 +12,15 @@ var LogView = Backbone.View.extend({
     // this.listenTo(this.model, 'change', this.render);
     this.model.on('change', this.render, this);
     this.intv = setInterval(function() {
-      this.fetch();
+      this.req = this.fetch();
     }.bind(this), 1000);
-    this.fetch();
+    this.req = this.fetch(true);
   },
 
   fetch: function(force) {
-    if (this.req.readyState == 4 && force)
+    if (force && this.req)
       this.req.abort();
-    else
+    else if (this.req.readyState != 4)
       return;
 
     this.req = this.model.fetch();
