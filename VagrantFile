@@ -3,7 +3,7 @@
 
 Vagrant::Config.run do |config|
   # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "precise64"
+  config.vm.box = "precise64_base"
 
   # The url from where the 'config.vm.box' box will be fetched if it
   # doesn't already exist on the user's system.
@@ -22,7 +22,7 @@ Vagrant::Config.run do |config|
   # Share an additional folder to the guest VM. The first argument is
   # an identifier, the second is the path on the guest to mount the
   # folder, and the third is the path on the host to the actual folder.
-  config.vm.share_folder "shared-site", "~/site/", ""
+  config.vm.share_folder "shared-site", "/srv", ""
 
   # config.vm.customize ["modifyvm", :id, "--memory", "1024", "--natdnshostresolver1", "on"]
 

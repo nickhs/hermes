@@ -15,6 +15,7 @@ apt-get install -y pep8
 apt-get install -y pyflakes
 apt-get install -y python-dev
 apt-get install -y python-setuptools
+apt-get install -y libpq-dev
 
 easy_install pip
 
